@@ -40,15 +40,40 @@ const QuizBattle = () => {
     const [showAnimation, setShowAnimation] = useState(false);
     const [questions, setQuestions] = useState(quizQuestions);
   
-    // タイマー処理
+    // タイマー処理を修正
     useEffect(() => {
       let interval;
       if (timerActive && seconds > 0) {
         interval = setInterval(() => {
-          setSeconds(seconds - 1);
+          setSeconds(prev => prev - 1);
+          if (seconds === 1) {
+            setTimerActive(false);
+            // 時間切れの場合：現在のプレイヤーのHPを20減らす
+            const newPlayers = [...players];
+            newPlayers[currentPlayer].hp = Math.max(0, newPlayers[currentPlayer].hp - 20);
+            setPlayers(newPlayers);
+            setAnswerResult("timeout");
+    
+            // 勝敗判定
+            if (newPlayers[currentPlayer].hp <= 0) {
+              const winnerId = currentPlayer === 0 ? 1 : 0;
+              setWinner(newPlayers[winnerId]);
+              setGameState("finished");
+              return;
+            }
+    
+            // 次のプレイヤーへ
+            setTimeout(() => {
+              setCurrentPlayer(currentPlayer === 0 ? 1 : 0);
+              setSeconds(10);
+              pickRandomQuestion();
+              setTimerActive(true);
+              setShowAnimation(false);
+              setAnswerResult(null);
+              setQuestionCount(prev => prev + 1);
+            }, 2000);
+          }
         }, 1000);
-      } else if (seconds === 0 && timerActive) {
-        handleTimeUp();
       }
       return () => clearInterval(interval);
     }, [seconds, timerActive]);
@@ -96,48 +121,44 @@ const QuizBattle = () => {
       setShowAnimation(false);
     };
   
-    // 回答処理
+    // handleAnswer関数を修正
     const handleAnswer = (selectedIndex) => {
       setTimerActive(false);
       const isCorrect = selectedIndex === currentQuestion.answer;
       
       let newPlayers = [...players];
       if (isCorrect) {
-        // 正解の場合：相手のHPを10減らす
+        // 正解の場合：相手のHPを20減らす
         const opponentId = currentPlayer === 0 ? 1 : 0;
-        newPlayers[opponentId].hp = Math.max(0, newPlayers[opponentId].hp - 10);
+        newPlayers[opponentId].hp = Math.max(0, newPlayers[opponentId].hp - 20);
         setAnswerResult("correct");
       } else {
-        // 不正解の場合：自身のHPを10減らす
-        newPlayers[currentPlayer].hp = Math.max(0, newPlayers[currentPlayer].hp - 10);
+        // 不正解の場合：自身のHPを20減らす
+        newPlayers[currentPlayer].hp = Math.max(0, newPlayers[currentPlayer].hp - 20);
         setAnswerResult("incorrect");
       }
       
+      setPlayers(newPlayers);
       setShowAnimation(true);
-      
-      if (isCorrect) {
-        const updatedPlayers = [...players];
-        const opponentIndex = currentPlayer === 0 ? 1 : 0;
-        updatedPlayers[opponentIndex].hp = Math.max(0, updatedPlayers[opponentIndex].hp - 10);
-        setPlayers(updatedPlayers);
-        
-        // 相手のHPが0になったらゲーム終了
-        if (updatedPlayers[opponentIndex].hp === 0) {
-          setTimeout(() => {
-            setWinner(updatedPlayers[currentPlayer]);
-            setGameState("finished");
-          }, 1500);
-          return;
-        }
+    
+      // 勝敗判定
+      if (newPlayers.some(player => player.hp <= 0)) {
+        const winnerId = newPlayers[0].hp <= 0 ? 1 : 0;
+        setWinner(newPlayers[winnerId]);
+        setGameState("finished");
+        return;
       }
-      
-      // 結果を表示した後、次の問題へ
+    
+      // 次のプレイヤーへ
       setTimeout(() => {
-        // 次のプレイヤーへ
         setCurrentPlayer(currentPlayer === 0 ? 1 : 0);
+        setSeconds(10);
         pickRandomQuestion();
         setTimerActive(true);
-      }, 1500);
+        setShowAnimation(false);
+        setAnswerResult(null);
+        setQuestionCount(prev => prev + 1);
+      }, 2000);
     };
   
     // 時間切れ処理
