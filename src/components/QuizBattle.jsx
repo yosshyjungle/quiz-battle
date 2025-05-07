@@ -198,26 +198,36 @@ const QuizBattle = () => {
     const ResultOverlay = () => {
       if (!showAnimation || !answerResult) return null;
       
-      const bgColor = answerResult === "correct" 
-        ? "bg-green-500" 
-        : answerResult === "timeout" ? "bg-yellow-500" : "bg-red-500";
-      
-      const icon = answerResult === "correct" 
-        ? "fas fa-check-circle"
-        : answerResult === "timeout" ? "fas fa-clock" : "fas fa-times-circle";
-      
-      const message = answerResult === "correct" 
-        ? "正解!"
-        : answerResult === "timeout" ? "時間切れ!" : "不正解!";
+      const config = {
+        correct: {
+          bgColor: "bg-green-500",
+          icon: "fas fa-check-circle",
+          message: "正解!",
+          damageText: "相手に 20 ダメージ!"
+        },
+        incorrect: {
+          bgColor: "bg-red-500",
+          icon: "fas fa-times-circle",
+          message: "不正解!",
+          damageText: "自身に 20 ダメージ!"
+        },
+        timeout: {
+          bgColor: "bg-red-500",  // 不正解と同じ背景色
+          icon: "fas fa-times-circle",  // 不正解と同じアイコン
+          message: "時間切れ!",
+          damageText: "自身に 20 ダメージ!",
+          animation: "animate-pulse"  // 不正解と同じアニメーション
+        }
+      };
+    
+      const current = config[answerResult];
       
       return (
-        <div className={`fixed inset-0 ${bgColor} bg-opacity-50 flex items-center justify-center z-40 animate-pulse`}>
+        <div className={`fixed inset-0 ${current.bgColor} bg-opacity-50 flex items-center justify-center z-40 animate-pulse`}>
           <div className="text-center text-white">
-            <i className={`${icon} text-6xl mb-4`}></i>
-            <h2 className="text-4xl font-bold">{message}</h2>
-            {answerResult === "correct" && (
-              <p className="text-xl mt-2">相手に 10 ダメージ!</p>
-            )}
+            <i className={`${current.icon} text-6xl mb-4`}></i>
+            <h2 className="text-4xl font-bold">{current.message}</h2>
+            <p className="text-xl mt-2">{current.damageText}</p>
           </div>
         </div>
       );
@@ -272,11 +282,19 @@ const QuizBattle = () => {
                 </li>
                 <li className="flex items-start">
                   <i className="fas fa-check-circle mt-1 mr-2 text-green-500"></i>
-                  <span>正解すると相手のHPを10減らせる</span>
+                  <span>正解すると相手のHPを20減らせる</span>
+                </li>
+                <li className="flex items-start">
+                  <i className="fas fa-times-circle mt-1 mr-2 text-red-500"></i>
+                  <span>不正解だと自身のHPが20減る</span>
                 </li>
                 <li className="flex items-start">
                   <i className="fas fa-clock mt-1 mr-2 text-yellow-500"></i>
                   <span>各問題の制限時間は10秒</span>
+                </li>
+                <li className="flex items-start">
+                  <i className="fas fa-hourglass-end mt-1 mr-2 text-orange-500"></i>
+                  <span>時間切れだと自身のHPが20減る</span>
                 </li>
                 <li className="flex items-start">
                   <i className="fas fa-trophy mt-1 mr-2 text-yellow-600"></i>
