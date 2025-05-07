@@ -40,7 +40,7 @@ const QuizBattle = () => {
     const [showAnimation, setShowAnimation] = useState(false);
     const [questions, setQuestions] = useState(quizQuestions);
   
-    // タイマー処理を修正
+    // タイマー処理の修正
     useEffect(() => {
       let interval;
       if (timerActive && seconds > 0) {
@@ -48,11 +48,14 @@ const QuizBattle = () => {
           setSeconds(prev => prev - 1);
           if (seconds === 1) {
             setTimerActive(false);
-            // 時間切れの場合：現在のプレイヤーのHPを20減らす
+            // 時間切れの場合
             const newPlayers = [...players];
             newPlayers[currentPlayer].hp = Math.max(0, newPlayers[currentPlayer].hp - 20);
             setPlayers(newPlayers);
+            
+            // アニメーション表示のための状態更新を追加
             setAnswerResult("timeout");
+            setShowAnimation(true);
     
             // 勝敗判定
             if (newPlayers[currentPlayer].hp <= 0) {
@@ -144,8 +147,15 @@ const QuizBattle = () => {
       // 勝敗判定
       if (newPlayers.some(player => player.hp <= 0)) {
         const winnerId = newPlayers[0].hp <= 0 ? 1 : 0;
-        setWinner(newPlayers[winnerId]);
-        setGameState("finished");
+        
+        // 勝利アニメーションを表示してから結果画面に遷移
+        setAnswerResult("victory");
+        setShowAnimation(true);
+        
+        setTimeout(() => {
+          setWinner(newPlayers[winnerId]);
+          setGameState("finished");
+        }, 2000); // 2秒後に結果画面へ
         return;
       }
     
@@ -217,17 +227,33 @@ const QuizBattle = () => {
           message: "時間切れ!",
           damageText: "自身に 20 ダメージ!",
           animation: "animate-pulse"  // 不正解と同じアニメーション
+        },
+        victory: {
+          bgColor: "bg-yellow-500",
+          icon: "fas fa-crown",
+          message: "勝利!",
+          animation: "animate-bounce",
+          extraClass: "bg-gradient-to-r from-yellow-400 to-yellow-600"
         }
       };
     
       const current = config[answerResult];
       
       return (
-        <div className={`fixed inset-0 ${current.bgColor} bg-opacity-50 flex items-center justify-center z-40 animate-pulse`}>
+        <div className={`fixed inset-0 ${current.bgColor} ${current.extraClass || ''} 
+          bg-opacity-50 flex items-center justify-center z-40 
+          ${current.animation || 'animate-pulse'}`}>
           <div className="text-center text-white">
             <i className={`${current.icon} text-6xl mb-4`}></i>
             <h2 className="text-4xl font-bold">{current.message}</h2>
-            <p className="text-xl mt-2">{current.damageText}</p>
+            {current.damageText && <p className="text-xl mt-2">{current.damageText}</p>}
+            {answerResult === "victory" && (
+              <div className="mt-4">
+                <i className="fas fa-star text-4xl mx-2 animate-spin"></i>
+                <i className="fas fa-trophy text-4xl mx-2 animate-bounce"></i>
+                <i className="fas fa-star text-4xl mx-2 animate-spin"></i>
+              </div>
+            )}
           </div>
         </div>
       );
