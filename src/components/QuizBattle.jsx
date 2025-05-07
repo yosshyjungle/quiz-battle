@@ -100,7 +100,19 @@ const QuizBattle = () => {
     const handleAnswer = (selectedIndex) => {
       setTimerActive(false);
       const isCorrect = selectedIndex === currentQuestion.answer;
-      setAnswerResult(isCorrect ? "correct" : "incorrect");
+      
+      let newPlayers = [...players];
+      if (isCorrect) {
+        // 正解の場合：相手のHPを10減らす
+        const opponentId = currentPlayer === 0 ? 1 : 0;
+        newPlayers[opponentId].hp = Math.max(0, newPlayers[opponentId].hp - 10);
+        setAnswerResult("correct");
+      } else {
+        // 不正解の場合：自身のHPを10減らす
+        newPlayers[currentPlayer].hp = Math.max(0, newPlayers[currentPlayer].hp - 10);
+        setAnswerResult("incorrect");
+      }
+      
       setShowAnimation(true);
       
       if (isCorrect) {
